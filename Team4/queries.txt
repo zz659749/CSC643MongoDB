@@ -1,0 +1,66 @@
+Query (A):
+db.zipcodes.distinct("city").length
+
+Query (B):
+db.zipcodes.aggregate([{ $group:{_id:{state: "$state",city: "$city",pop:"$pop",z:"_id" }}},{$group:{_id:{state:
+"$_id.state",city:"$_id.city",pop:"$_id.pop"}}}])
+
+Query(C):
+db.zipcodes.distinct("city",{ state: "MA", pop:{ $gte:1000, $lte:2000}});
+
+
+Query (D):
+var mapFunction1 = function() {
+key = {state: this.state};
+val = {Cities: 1, Population: this.pop};
+emit(key, val);
+};
+
+var reduceFunction1 = function(key, val) {
+Cities = 0;
+Population = 0;
+for(i in val){
+Cities = Cities + val[i].Cities;
+Population = Population + val[i].Population;}
+return {Cities, Population}
+};
+
+db.zipcodes.mapReduce(
+mapFunction1,
+reduceFunction1,
+{ out: "map_reduce_Done" }
+).find()
+
+Query (E)
+var mapFunction1 = function() {
+                       emit(this.state, this.pop);
+                   };
+var reduceFunction1 = function(k, v) {
+                          return Array.avg(v);
+
+                      };
+  				
+db.zipcodes.mapReduce(
+                     mapFunction1,
+                     reduceFunction1,
+                     { out: "avg_pop" }
+                   ).find()
+
+Query (F)
+
+Query(f):
+var mapFunction1 = function() {
+emit(this.state, this.pop);
+};
+
+var reduceFunction1 = function(k, value) {
+return Array.sum(value);
+};
+
+db.zipcodes.mapReduce(
+mapFunction1,
+reduceFunction1,
+{ out: "map_reduce_Done" }
+).find().sort({value: 1}).limit(1)
+
+
